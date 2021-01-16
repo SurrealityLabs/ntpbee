@@ -161,7 +161,7 @@ void handle_root()
     return;
   }
   String s = "<!DOCTYPE html><html lang=\"en\"><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\"/>";
-  s += "<title>IotWebConf 02 Status and Reset</title></head><body>Hello world!<br/>";
+  s += "<title>ntpbee</title></head><body>Hello world!<br/>";
   s += "Go to <a href='config'>configure page</a> to change settings.";
   s += "</body></html>\n";
 
