@@ -5,7 +5,7 @@ void gen_nmea(time_t timeUNIX)
   struct tm * timeinfo;
   
   timeinfo = gmtime(&timeUNIX);
-
+  // FIXME gps message configuration needs to be set in web config
   snprintf(GPSBuffer, 128, "$GPZDA,%02d%02d%02d.%03d,%02d,%02d,%04d,,*", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, 0, timeinfo->tm_mday, timeinfo->tm_mon + 1, timeinfo->tm_year + 1900);
   nmea_checksum(GPSBuffer);
   Serial.println(GPSBuffer);  

@@ -20,6 +20,9 @@ const uint8_t ntpIntervalLen = 8;
 char ntpIntervalStr[ntpIntervalLen];
 uint8_t ntpIntervalInt;
 
+bool wifiIsConnected = false;
+
+void wifiConnected();
 void configSaved();
 
 DNSServer dnsServer;
@@ -40,6 +43,7 @@ void setup() {
   iotWebConf.setConfigPin(config_pin);
   iotWebConf.addParameter(&ntpServerParam);
   iotWebConf.addParameter(&ntpInvervalParam);
+  iotWebConf.setWifiConnectionCallback(&wifiConnected);
   iotWebConf.setConfigSavedCallback(&configSaved);
   iotWebConf.init();
 
@@ -83,7 +87,13 @@ void setup() {
       //Serial.println("End Failed");
     }
   });
+}
+
+void wifiConnected()
+{
+  iotWebConf.disableBlink();
   ArduinoOTA.begin();
+  wifiIsConnected = true;
 }
 
 void configSaved()
@@ -96,11 +106,15 @@ void loop() {
   time_t timeUNIX;
   
   iotWebConf.doLoop();
-  ArduinoOTA.handle();
 
-  if (ntp_handle(&timeUNIX))
+  if ((WiFi.status() == WL_CONNECTED) && wifiIsConnected)
   {
-    gen_nmea(timeUNIX);
+    ArduinoOTA.handle();
+
+    if (ntp_handle(&timeUNIX))
+    {
+      gen_nmea(timeUNIX);
+    }
   }
 }
 
