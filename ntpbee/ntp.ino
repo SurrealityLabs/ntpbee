@@ -22,6 +22,8 @@ static byte ntpBuffer[NTP_PACKET_SIZE]; // buffer to hold incoming and outgoing 
 
 static time_t nextNTPTime;
 static uint32_t nextNTPMillis;
+static uint32_t lastNTPSendMillis;
+static uint32_t networkDelayMillis;
 
 IPAddress ntpIP;
 
@@ -80,14 +82,14 @@ bool ntp_handle(time_t *timeUNIX)
       //Serial.println("Sending NTP packet");
       UDP.begin(123);
       send_ntp_packet();
-      nextNTPMillis = millis() + (60ul * 1000ul);
+      lastNTPSendMillis = millis();
       ntpState = NTP_STATE_WAIT_RECV;
       /* FALLTHROUGH TO NTP_STATE_WAIT_RECV */
     }
 
     case NTP_STATE_WAIT_RECV:
     {
-      if (millis() > nextNTPMillis)
+      if (millis() - lastNTPSendMillis > 60000ul)
       {
         ntpState = NTP_STATE_SEND;
         break;
@@ -97,7 +99,13 @@ bool ntp_handle(time_t *timeUNIX)
         break;
       }
       //Serial.println("Parsing NTP packet");
+      networkDelayMillis = (millis() - lastNTPSendMillis) / 2;
       process_ntp_packet();
+
+      // Handle network delay
+      nextNTPTime += 1;
+      nextNTPMillis += (1000 - networkDelayMillis);
+      
       ntpState = NTP_STATE_WAIT_NEXT_SECOND;
       /* FALLTHROUGH TO NTP_STATE_WAIT_NEXT_SECOND */
     }
