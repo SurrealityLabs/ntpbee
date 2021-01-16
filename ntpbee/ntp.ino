@@ -135,10 +135,6 @@ bool ntp_config(char* server, uint8_t interval)
 {
   strncpy(ntpServer, server, 128);
   ntpInterval = interval * (60ul * 60ul * 1000ul);
-  //Serial.print("NTP server is ");
-  //Serial.println(ntpServer);
-  //Serial.print("NTP interval is ");
-  //Serial.println(ntpInterval);
 }
 
 static void send_ntp_packet()
@@ -164,8 +160,4 @@ static void process_ntp_packet()
   uint32_t UNIXTime = NTPTime - seventyYears;
   nextNTPTime = UNIXTime + 1;
   nextNTPMillis = millis() + ntpDelayLUT[ntpBuffer[44]];
-  //Serial.print("Millis is ");
-  //Serial.println(millis());
-  //Serial.print("Next NTP out is ");
-  //Serial.println(nextNTPMillis);
 }
