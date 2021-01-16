@@ -92,6 +92,7 @@ void setup() {
 void wifiConnected()
 {
   iotWebConf.disableBlink();
+  digitalWrite(led_pin, LOW);
   ArduinoOTA.begin();
   wifiIsConnected = true;
 }
