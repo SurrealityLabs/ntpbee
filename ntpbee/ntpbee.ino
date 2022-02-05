@@ -30,6 +30,10 @@ char ggaEnableStr[nmeaEnableLen];
 char gsaEnableStr[nmeaEnableLen];
 char rmcEnableStr[nmeaEnableLen];
 
+const uint8_t msgCountMaxLen = 3;
+char msgCountMaxStr[msgCountMaxLen];
+uint8_t msgCountMaxInt;
+
 bool wifiIsConnected = false;
 
 void wifiConnected();
@@ -47,6 +51,7 @@ IotWebConfParameter zdaEnableParam = IotWebConfParameter("Enable GPZDA", "zdaEna
 IotWebConfParameter ggaEnableParam = IotWebConfParameter("Enable GPGGA", "ggaEnable", ggaEnableStr, nmeaEnableLen, "number", "0..1", "1", "min='0' max='1' step='1'");
 IotWebConfParameter gsaEnableParam = IotWebConfParameter("Enable GPGSA", "gsaEnable", gsaEnableStr, nmeaEnableLen, "number", "0..1", "1", "min='0' max='1' step='1'");
 IotWebConfParameter rmcEnableParam = IotWebConfParameter("Enable GPRMC", "rmcEnable", rmcEnableStr, nmeaEnableLen, "number", "0..1", "1", "min='0' max='1' step='1'");
+IotWebConfParameter msgCountMaxParam = IotWebConfParameter("Number of NMEA messages", "msgCountMax", msgCountMaxStr, msgCountMaxLen, "number", "1..99", "1", "min='1' max='99' step='1'");
 
 void setup() {
   // put your setup code here, to run once:
@@ -64,6 +69,7 @@ void setup() {
   iotWebConf.addParameter(&ggaEnableParam);
   iotWebConf.addParameter(&gsaEnableParam);
   iotWebConf.addParameter(&rmcEnableParam);
+  iotWebConf.addParameter(&msgCountMaxParam);
   iotWebConf.setWifiConnectionCallback(&wifiConnected);
   iotWebConf.setConfigSavedCallback(&configSaved);
   iotWebConf.setFormValidator(&formValidator);
@@ -95,6 +101,9 @@ void configSaved()
   Serial.begin(serialRateInt);
   ntpIntervalInt = atoi(ntpIntervalStr);
   ntp_config(ntpServerStr, ntpIntervalInt);
+
+  msgCountMaxInt = atoi(msgCountMaxStr);
+  if (msgCountMaxInt == 0) msgCountMaxInt = 1;
 
   zda = zdaEnableStr[0] == '1' ? true : false;
   gga = ggaEnableStr[0] == '1' ? true : false;
@@ -134,7 +143,10 @@ boolean formValidator()
 }
 
 void loop() {
-  time_t timeUNIX;
+  static time_t timeUNIX;
+
+  static uint32_t lastMsgTime;
+  static uint8_t msgCount;
   
   iotWebConf.doLoop();
 
@@ -144,7 +156,20 @@ void loop() {
 
     if (ntp_handle(&timeUNIX))
     {
+      lastMsgTime = millis();
       nmea_out(timeUNIX);
+      msgCount = 1;
+    }
+      
+    if ((msgCount < msgCountMaxInt) && timeUNIX > 0)
+    {
+      if (millis() - lastMsgTime > 1000)
+      {
+        timeUNIX += 1;
+        lastMsgTime = lastMsgTime + 1000;
+        nmea_out(timeUNIX);
+        msgCount += 1;
+      }
     }
   }
 }
